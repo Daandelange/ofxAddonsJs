@@ -1533,7 +1533,9 @@
 
   syncHeaderHeight();
   // fetch('addons.json')
-  fetch('http://github.com/danoli3/ofxAddons/releases/latest/download/addons.json')
+  // fetch('https://github.com/danoli3/ofxAddons/releases/latest/download/addons.json')
+  // fetch('https://github.com/Daandelange/ofxAddonsJs/blob/data/addons.json')
+  fetch('https://cdn.jsdelivr.net/gh/daandelange/ofxAddonsJs@data/addons.json')
     .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
     .then(onDataLoaded)
     .catch(showLoadError);
