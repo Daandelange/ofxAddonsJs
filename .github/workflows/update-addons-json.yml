@@ -1,0 +1,40 @@
+# .github/workflows/update-addons-json.yml
+name: Update addons.json
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out data branch
+        uses: actions/checkout@v4
+        with:
+          ref: data
+
+      - name: Download latest release asset
+        run: |
+          curl --fail --location \
+            --output addons.json \
+            "https://github.com/danoli3/ofxAddons/releases/latest/download/addons.json"
+
+      - name: Commit updated file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add addons.json
+
+          if git diff --cached --quiet; then
+            echo "addons.json has not changed"
+          else
+            git commit -m "Update addons.json from latest ofxAddons release"
+            git push origin data
+          fi
