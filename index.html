@@ -1,0 +1,1544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ofxAddons — Browser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+  :root{
+    --header-h:   64px;
+    --paper:      #ECEEE7;
+    --paper-dim:  #E2E4DB;
+    --ink:        #14181B;
+    --ink-soft:   #565B54;
+    --line:       #C7CBBC;
+    --line-soft:  #D8DACE;
+    --accent:     #C4441E;
+    --good:       #3C6E52;
+    --good-ink:   #FFFFFF;
+    --bad:        #A23B2E;
+    --warn:       #9C7A00;
+    --card-bg:    #F5F6F1;
+    --backdrop:   rgba(15,17,14,.5);
+    --mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  :root[data-theme="dark"]{
+    --paper:      #14171A;
+    --paper-dim:  #1C2023;
+    --ink:        #ECEEE7;
+    --ink-soft:   #9BA39C;
+    --line:       #33383A;
+    --line-soft:  #262B2D;
+    --accent:     #E8703F;
+    --good:       #4FAE82;
+    --good-ink:   #0D1210;
+    --bad:        #D2604A;
+    --warn:       #D0A428;
+    --card-bg:    #1A1E20;
+    --backdrop:   rgba(0,0,0,.65);
+  }
+
+  * { box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:var(--accent); text-decoration:none; }
+  a:hover{ text-decoration:underline; }
+  a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  button{ font-family:inherit; }
+  code{ font-family:var(--mono); background:var(--paper-dim); padding:1px 5px; border-radius:2px; }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:20;
+    background:var(--paper);
+    border-bottom:1px solid var(--line);
+  }
+  .head-row{
+    display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+    padding:12px 16px;
+    max-width:1400px; margin:0 auto;
+  }
+  .brand{
+    display:flex; align-items:center; gap:9px;
+    font-family:var(--mono);
+    font-weight:600;
+    font-size:18px;
+    letter-spacing:-0.01em;
+    white-space:nowrap;
+    color:var(--ink);
+  }
+  .brand .logo{ width:26px; height:auto; flex:none; color:var(--accent); }
+  .brand-text{ display:flex; flex-direction:column; }
+  .brand small{
+    display:block;
+    font-family:var(--sans);
+    font-weight:400;
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-top:1px;
+  }
+  .head-controls{ display:flex; align-items:center; gap:12px; flex:1; flex-wrap:wrap; min-width:0; }
+  .search-wrap{ flex:1 1 200px; min-width:160px; position:relative; }
+  .search-wrap input[type="search"]{
+    width:100%;
+    padding:9px 12px 9px 30px;
+    border:1px solid var(--line);
+    background:var(--paper-dim);
+    color:var(--ink);
+    font-family:var(--mono);
+    font-size:13.5px;
+    border-radius:2px;
+  }
+  .search-wrap svg{
+    position:absolute; left:9px; top:50%; transform:translateY(-50%);
+    width:14px; height:14px; opacity:.55; pointer-events:none;
+  }
+  .view-toggle{
+    display:flex; border:1px solid var(--line); border-radius:2px; overflow:hidden; flex:none;
+  }
+  .view-toggle button{
+    background:var(--paper-dim); border:none; color:var(--ink-soft);
+    padding:8px 11px; font-size:12.5px; cursor:pointer; font-family:var(--mono);
+  }
+  .view-toggle button + button{ border-left:1px solid var(--line); }
+  .view-toggle button.active{ background:var(--ink); color:var(--paper); }
+  .icon-btn{
+    background:var(--paper-dim); border:1px solid var(--line); color:var(--ink-soft);
+    padding:8px 11px; font-size:12.5px; cursor:pointer; font-family:var(--mono);
+    border-radius:2px; flex:none;
+  }
+  .icon-btn:hover{ color:var(--ink); border-color:var(--ink-soft); }
+  .mini-toggle{
+    display:flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px;
+    color:var(--ink-soft); cursor:pointer; white-space:nowrap; flex:none;
+  }
+  .mini-toggle input{ accent-color:var(--accent); }
+  .filters-toggle{
+    display:none;
+    background:var(--ink); color:var(--paper);
+    border:none; padding:9px 13px; font-size:12.5px; border-radius:2px; cursor:pointer;
+    font-family:var(--mono); flex:none;
+  }
+
+  /* ---------- layout ---------- */
+  .layout{
+    max-width:1400px; margin:0 auto;
+    display:grid;
+    grid-template-columns: 250px 1fr;
+    gap:0;
+    align-items:start;
+  }
+  aside.filters{
+    border-right:1px solid var(--line);
+    padding:16px 16px 40px;
+    position:sticky; top:var(--header-h);
+    max-height:calc(100vh - var(--header-h));
+    overflow-y:auto;
+  }
+  .filter-group{ margin-bottom:16px; }
+  .filter-group:last-child{ margin-bottom:0; }
+  .filter-label{
+    display:block;
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  select, .num-input{
+    width:100%;
+    padding:7px 8px;
+    border:1px solid var(--line);
+    background:var(--card-bg);
+    color:var(--ink);
+    font-family:var(--mono);
+    font-size:12.5px;
+    border-radius:2px;
+  }
+  .filter-section{ padding-top:16px; border-top:1px solid var(--line-soft); margin-top:16px; }
+  .filter-section-title{
+    font-family:var(--mono); font-size:11px; font-weight:600; color:var(--ink);
+    margin-bottom:10px;
+  }
+  .preset-btn{
+    padding:7px 9px;
+    background:transparent;
+    border:1px dashed var(--line);
+    color:var(--ink-soft);
+    font-family:var(--mono);
+    font-size:11px;
+    cursor:pointer;
+    border-radius:2px;
+    flex:1;
+    white-space:nowrap;
+  }
+  .preset-btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .preset-row{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .preset-row .preset-label{ font-family:var(--mono); font-size:11px; color:var(--ink-soft); flex:none; }
+  .filters-count{
+    font-family:var(--mono); font-size:11px; color:var(--ink-soft);
+    margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--line-soft);
+  }
+  .filters-count b{ color:var(--ink); font-weight:600; }
+
+  /* ---------- tri-state checkbox control ---------- */
+  .tri-list{ display:flex; flex-direction:column; gap:9px; }
+  .tri{
+    display:flex; align-items:center; gap:8px;
+    background:none; border:none; padding:0; margin:0;
+    cursor:pointer; width:100%; text-align:left;
+    font-family:var(--sans); font-size:12.5px; color:var(--ink);
+  }
+  .tri-box{
+    flex:none; width:18px; height:18px;
+    border:1.5px solid var(--line);
+    border-radius:3px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:11px; font-weight:600;
+    color:var(--ink-soft); background:var(--card-bg);
+  }
+  .tri[data-state="yes"] .tri-box{ background:var(--good); border-color:var(--good); color:var(--good-ink); }
+  .tri[data-state="no"] .tri-box{ background:var(--bad); border-color:var(--bad); color:#fff; }
+  .tri[data-state="any"] .tri-box{ color:var(--ink-soft); }
+
+  main{ padding:16px; min-height:70vh; }
+  .status-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-bottom:12px; font-family:var(--mono); font-size:11.5px; color:var(--ink-soft);
+    flex-wrap:wrap; gap:6px;
+  }
+
+  /* ---------- cards / grid ---------- */
+  #results.grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+    gap:12px;
+  }
+  #results.is-updating{ opacity:.35; pointer-events:none; transition:opacity .1s linear; }
+  .card{
+    position:relative;
+    background:var(--card-bg);
+    border:1px solid var(--line);
+    border-radius:2px;
+    display:flex; flex-direction:column;
+    overflow:hidden;
+    content-visibility:auto;
+    contain-intrinsic-size: auto 320px;
+  }
+  .card .thumb{
+    width:100%; height:70px; object-fit:cover;
+    background:var(--paper-dim);
+    border-bottom:1px solid var(--line);
+    display:block;
+  }
+  .card-body{ padding:11px 12px 12px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .card-title-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:6px; padding-right:56px; }
+  .card-title{ font-family:var(--mono); font-weight:600; font-size:14.5px; word-break:break-word; }
+  .card-author{
+    display:flex; align-items:center; gap:6px;
+    font-size:12px; color:var(--ink-soft);
+  }
+  .card-author img{ width:16px; height:16px; border-radius:50%; display:block; background:var(--paper-dim); }
+  .card-desc{ font-size:12.8px; color:var(--ink); opacity:.85; flex:1; }
+
+  .big-stats{
+    display:flex; border-top:1px solid var(--line-soft); border-bottom:1px solid var(--line-soft);
+  }
+  .big-stats .stat{ flex:1; text-align:center; padding:8px 4px; }
+  .big-stats .stat + .stat{ border-left:1px solid var(--line-soft); }
+  .big-stats .stat .num{ font-family:var(--mono); font-weight:600; font-size:19px; display:block; }
+  .big-stats .stat .lbl{ font-size:10px; color:var(--ink-soft); margin-top:2px; }
+
+  .dates-row{ font-family:var(--mono); font-size:11px; color:var(--ink-soft); }
+  .dates-row span[title]{ cursor:help; border-bottom:1px dotted var(--line); }
+  .dates-row .sep{ margin:0 3px; opacity:.5; border-bottom:none; }
+
+  /* badges: top-right corner "s / mk / r" chips */
+  .badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    font-family:var(--mono); font-size:10px; font-weight:700;
+    padding:2px 5px; border-radius:3px;
+    background:var(--good); color:var(--good-ink);
+    line-height:1.3; letter-spacing:.02em;
+    cursor:help;
+  }
+  .card .badges{
+    position:absolute; top:8px; right:8px; z-index:3;
+    display:flex; gap:4px;
+  }
+  .card .badges .badge{ box-shadow:0 1px 3px rgba(0,0,0,.35); }
+  body.hide-details .card .badges{ display:none; }
+
+  details.sub{ font-size:11.5px; }
+  details.sub summary{
+    cursor:pointer; font-family:var(--mono); color:var(--ink-soft);
+    list-style:none; user-select:none;
+  }
+  details.sub summary::-webkit-details-marker{ display:none; }
+  details.sub summary:before{ content:'▸ '; }
+  details.sub[open] summary:before{ content:'▾ '; }
+  details.sub ul{ margin:8px 0 0; padding-left:0; list-style:none; display:flex; flex-direction:column; gap:8px; }
+  details.sub li{ word-break:break-word; }
+  .li-title{ font-family:var(--mono); font-weight:600; color:var(--ink); font-size:11.5px; cursor:help; border-bottom:1px dotted var(--line); display:inline-block; }
+  .li-sub{ color:var(--ink-soft); font-size:11px; margin-top:1px; }
+  .li-sub a{ font-family:var(--mono); }
+  .sub-meta{ color:var(--ink-soft); font-size:10.5px; }
+  body.hide-details details.sub{ display:none; }
+
+  /* ---------- table/list view ---------- */
+  #results.list{ display:block; }
+  .table-wrap{ overflow:auto; border:1px solid var(--line); border-radius:2px; background:var(--card-bg); max-height:calc(100vh - var(--header-h) - 90px); }
+  table.addons-table{ width:100%; border-collapse:collapse; font-size:12.5px; min-width:1160px; }
+  table.addons-table th{
+    text-align:left; font-family:var(--mono); font-weight:600; font-size:11px;
+    color:var(--ink-soft); padding:9px 10px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:2; background:var(--card-bg);
+    white-space:nowrap;
+  }
+  table.addons-table td{
+    padding:9px 10px; border-bottom:1px solid var(--line-soft); vertical-align:top;
+    content-visibility:auto; contain-intrinsic-size: auto 42px;
+  }
+  table.addons-table tr:hover td{ background:var(--paper-dim); }
+  .row-thumb{ width:54px; height:22px; object-fit:cover; border:1px solid var(--line); display:block; }
+  .row-name{ font-family:var(--mono); font-weight:600; }
+  .row-desc{ max-width:340px; color:var(--ink); opacity:.85; }
+  .num{ font-family:var(--mono); text-align:right; white-space:nowrap; }
+  .date{ font-family:var(--mono); white-space:nowrap; color:var(--ink-soft); }
+  .row-flags{ display:flex; gap:4px; }
+  body.hide-details .col-flags,
+  body.hide-details .col-forkslist,
+  body.hide-details .col-branches{ display:none; }
+
+  .empty-state{
+    font-family:var(--mono); font-size:13px; color:var(--ink-soft);
+    padding:40px 10px; text-align:center; border:1px dashed var(--line); border-radius:2px;
+    grid-column: 1/-1;
+  }
+
+  .load-more-wrap{ text-align:center; margin-top:18px; }
+  #load-more{
+    padding:10px 22px; background:var(--ink); color:var(--paper); border:none;
+    font-family:var(--mono); font-size:12.5px; cursor:pointer; border-radius:2px;
+  }
+  #load-more:hover{ background:var(--accent); }
+
+  /* ---------- no-data state ---------- */
+  .no-data-box{
+    max-width:520px; margin:12vh auto; text-align:center;
+    padding:28px 26px; border:1px solid var(--line); background:var(--card-bg); border-radius:2px;
+  }
+  .no-data-box p{ font-size:13.5px; color:var(--ink); margin:0 0 14px; }
+  .no-data-box .filename{ display:block; margin:14px 0; font-family:var(--mono); font-size:13px; background:var(--paper-dim); padding:8px; border-radius:2px; }
+  .no-data-box input[type="file"]{ font-family:var(--sans); font-size:12.5px; color:var(--ink); }
+  body.no-data .head-controls,
+  body.no-data .filters-toggle,
+  body.no-data aside.filters{ display:none !important; }
+  body.no-data .layout{ grid-template-columns: 1fr; }
+
+  /* ---------- about dialog ---------- */
+  dialog#about-dialog{
+    max-width:600px; width:calc(100% - 40px);
+    border:1px solid var(--line); border-radius:3px;
+    background:var(--card-bg); color:var(--ink);
+    padding:0;
+  }
+  dialog#about-dialog::backdrop{ background:var(--backdrop); }
+  .about-content{ padding:26px 26px 22px; position:relative; max-height:82vh; overflow-y:auto; }
+  .about-content h2{ font-family:var(--mono); font-size:19px; margin:0 0 14px; }
+  .about-content h3{ font-family:var(--mono); font-size:13px; margin:20px 0 8px; color:var(--ink); }
+  .about-content p, .about-content li{ font-size:13px; color:var(--ink); opacity:.9; }
+  .about-content ul{ padding-left:18px; margin:6px 0; }
+  .about-content li{ margin-bottom:6px; }
+  .about-content a{ font-weight:600; }
+  .dialog-close{
+    position:absolute; top:14px; right:14px;
+    background:none; border:1px solid var(--line); color:var(--ink-soft);
+    width:26px; height:26px; border-radius:3px; cursor:pointer; font-size:13px;
+  }
+  .dialog-close:hover{ color:var(--ink); border-color:var(--ink-soft); }
+
+  @media (max-width: 880px){
+    .layout{ grid-template-columns: 1fr; }
+    aside.filters{
+      position:fixed; top:0; left:0; right:0; bottom:0; z-index:30;
+      background:var(--paper); max-height:none;
+      padding:16px; transform:translateX(-100%); transition:transform .18s ease;
+      overflow-y:auto;
+    }
+    aside.filters.open{ transform:translateX(0); }
+    .filters-toggle{ display:inline-block; }
+    .filters-close{
+      display:block; width:100%; margin-bottom:16px; padding:9px;
+      background:var(--ink); color:var(--paper); border:none; font-family:var(--mono);
+      font-size:12px; border-radius:2px; cursor:pointer;
+    }
+    .brand small{ display:none; }
+  }
+  @media (min-width: 881px){
+    .filters-close{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-row">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 110 58" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <g fill="currentColor" fill-rule="evenodd">
+          <path d="M58,29 C58,13 45,0 29,0 C13,0 0,13 0,29 C0,45 13,58 29,58 C45,58 58,45 58,29 Z"></path>
+          <rect x="59" y="0" width="25" height="58"></rect>
+          <rect x="85" y="26" width="15" height="15"></rect>
+          <path d="M85,0 L110,0 L85,25 L85,0 Z"></path>
+        </g>
+      </svg>
+      <span class="brand-text">ofxAddons<small id="brand-sub">Loading index…</small></span>
+    </div>
+    <div class="head-controls">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="search" type="search" placeholder="Search name, author, description…" autocomplete="off">
+      </div>
+      <label class="mini-toggle">
+        <input type="checkbox" id="toggle-details">
+        <span>Hide details</span>
+      </label>
+      <button class="icon-btn" id="theme-toggle" type="button" title="Toggle dark/light theme">◐</button>
+      <div class="view-toggle" role="group" aria-label="View mode">
+        <button id="view-grid" class="active" type="button">Cards</button>
+        <button id="view-list" type="button">Table</button>
+      </div>
+      <button class="icon-btn" id="about-btn" type="button">About</button>
+      <button class="filters-toggle" id="open-filters" type="button">Filters</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="filters" id="filters-panel">
+    <button class="filters-close" id="close-filters" type="button">Close filters</button>
+
+    <div class="filters-count" id="filters-count">— of — addons</div>
+
+    <div class="filter-group">
+      <label class="filter-label">Sort by</label>
+      <select id="f-sort">
+        <option value="updated_desc">Updated (newest)</option>
+        <option value="updated_asc">Updated (oldest)</option>
+        <option value="created_desc">Created (newest)</option>
+        <option value="created_asc">Created (oldest)</option>
+        <option value="stars_desc">Stars (most)</option>
+        <option value="forks_desc">Forks (most)</option>
+        <option value="name_asc">Name (A–Z)</option>
+        <option value="author_asc">Author (A–Z)</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Min. stars</label>
+      <input class="num-input" id="f-minstars" type="number" min="0" step="1" value="0" inputmode="numeric">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Min. forks</label>
+      <input class="num-input" id="f-minforks" type="number" min="0" step="1" value="0" inputmode="numeric">
+    </div>
+    <div class="filter-group">
+      <label class="filter-label">Min. examples</label>
+      <input class="num-input" id="f-minexamples" type="number" min="0" step="1" value="0" inputmode="numeric">
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-section-title">Status</div>
+      <div class="tri-list" id="tri-list"><!-- tri controls injected by JS --></div>
+    </div>
+
+    <div class="filter-section">
+      <div class="preset-row">
+        <span class="preset-label">Presets:</span>
+        <button class="preset-btn" id="preset-default" type="button">Default</button>
+        <button class="preset-btn" id="preset-robust" type="button">Robust</button>
+        <button class="preset-btn" id="preset-all" type="button">All</button>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="status-row">
+      <span id="result-summary">Loading…</span>
+    </div>
+    <div id="results" class="grid"></div>
+    <div class="load-more-wrap" id="load-more-wrap" style="display:none;">
+      <button id="load-more" type="button">Load more</button>
+    </div>
+  </main>
+</div>
+
+<dialog id="about-dialog">
+  <div class="about-content">
+    <button class="dialog-close" id="about-close" type="button" aria-label="Close">✕</button>
+    <h2>About ofxAddons</h2>
+    <p>This page is an unofficial browser for the openFrameworks addon ecosystem.<br/>It uses <a href="https://github.com/danoli3/ofxAddons" target="_blank" rel="noopener">danoli3/ofxAddons</a>, whose periodic crawl produces the <code>addons.json</code> database.</p>
+
+    <h3>How the list is built</h3>
+    <p>The crawler searches GitHub for repositories that look like openFrameworks addons (by naming convention and by the <code>ofxaddon</code> topic tag), then records their metadata: stars, forks, examples, activity dates, and whether the repo follows the standard addon layout.</p>
+    <p>Some manual filtering has been done and can be seen in the source code.</p>
+
+    <h3>Reading the flags</h3>
+    <ul>
+      <li><b>s</b> — has a valid addon folder structure (<code>src/</code>, examples, etc. per the community <a href="https://github.com/bakercp/ofxAddonTemplate" target="_blank" rel="noopener">ofxAddonTemplate</a>)</li>
+      <li><b>mk</b> — ships a Makefile</li>
+      <li><b>r</b> — has tagged GitHub releases</li>
+      <li><b>Forks</b> — forks of the addon that are newer than the addon itself, in case a fork is better maintained</li>
+      <li><b>Branches ahead</b> — branches within the same repo that are ahead of its default branch</li>
+    </ul>
+
+    <h3>URL options</h3>
+    <p>By default every matching addon renders at once. Append <code>?limit=60</code> to the page URL (any number works) to switch to batched loading with a "Load more" button instead — useful on slower devices or connections.</p>
+
+    <h3>Credits</h3>
+    <p>openFrameworks itself is built by its core team and community. The addon-indexing idea originates with <a href="https://github.com/atduskgreg" target="_blank" rel="noopener">Greg Borenstein</a> and contributors to the original ofxaddons.com. The dataset behind this page is crawled and published by <a href="https://github.com/danoli3/ofxAddons" target="_blank" rel="noopener">danoli3/ofxAddons</a>. This particular front end is an independent browser for that dataset, made by <a href="" target="_blank" rel="noopener">Daan de Lange</a> (and AI).</p>
+  </div>
+</dialog>
+
+<script>
+(function(){
+  "use strict";
+
+  // -------------------------------------------------------------
+  // Hardcoded exclude-list. Add GitHub usernames (lowercase) to
+  // hide every repo by that author, or "owner/repo" strings to
+  // hide one specific addon. Applied once, right after data loads.
+  // -------------------------------------------------------------
+  var BLACKLIST_AUTHORS = [
+    'ch2ziem',
+    // 'jaysonh',
+    // 'jaysonkh'
+  ];
+  var BLACKLIST_REPOS = [
+    // Manual
+    "CihanSenturk/ofxparser",
+    'jainelsantana/ofxconvert',
+    'csingley/ofxtools',
+    'tylersouthwick/ofx4j',
+    'stonejohnathan2/ofxxky',
+    'tig3rmast3r/OFXR-Bridge',
+    'OpenText001/ofXqKpyl',
+    'zunigaadam262/ofximr',
+    'walkersarah009/ofxkno',
+    'josephnicholas32/ofxrza',
+    'hendrixblake2/ofxwcv',
+    'humphreyamber9949/ofxclb',
+    'torrantika/ofxnsm',
+    'ldrf3ljcp972/ofxrrl',
+    'ConquerorSort/ofxtlxqr',
+    'Felix0993/ofxformatter',
+    'toxilb/ofxkau',
+    'joeldpode/ofxllr',
+    'rodrigofurlaneti/OfxManager',
+    'discimus/OfxFileReader',
+    'MomentumCabbie/ofxumazq',
+    'lights-rix/oFXIurru',
+    "prezasoftwares/OFXFormat-Regex",
+    "Ralphovi/ofxstatement-consorsbank",
+    "Ralphovi/ofxstatement-revolut",
+    "rodrigopalhares/OFXFix",
+    "tedcarnahan/ofxfix",
+    "toxestace/ofxfko",
+    "Vinimuller/ofx2csv",
+    "xseduran/ofxpwn",
+    "hapiris/ofxlys",
+    "asalmoni21/oFX8du9b1.mp4",
+    "discimus/OfxFileReader",
+    "liamanderson25150/ofxrqd",
+    "wtaluba/ofxgqs",
+    "CihanSenturk/ofxparser",
+    "getCursorsExe/OFXShade",
+    "hoyebquotex987-svg/Ofxswedits",
+    "rvanbaalen/ofxreader",
+    "vivlim/ofxcruncher",
+    "fgroenendijk/ofxconverter",
+    "onrampvip/ofxcourse-be365f714b10e4ea98519892df0a43ad1bebe582",
+    "lucasgb2/ofxreader",
+    "bfrisque/ofxstatement-be-bnp",
+    "Jacotsu/ofxstatement-intesasp",
+    "kosciCZ/ofxstatement-equabankcz",
+    "epitheton/ofxstatement-mbank-sk",
+    "carmenbianca/ofxstatement-asnbank",
+    "rsniezynski/ofxstatement-tmobilepl",
+    "doc22940/ofxstatement-sample",
+    "Alfystar/ofxstatement-directa",
+    "lorenzogiudici5/ofxstatement-hype",
+    "andreparames/ofxstatement-gocardless",
+    "JohannesKlug/ofxstatement-consors",
+    "doc22940/ofxstatement.conv",
+    "shenki/ofxstatement-woolworthsmoney",
+    "rsniezynski/ofxstatement-bzwbk",
+    "Holzhaus/ofxstatement-spardabank",
+    "lorenzogiudici5/ofxstatement-bancoposta",
+    "elrandar/ofxstatement-japan",
+    "rsi2m/ofxstatement-ee-swedbank",
+    "rsi2m/ofxstatement-ee-seb",
+    "Tracreed/ofxstatement-se-swedbank",
+    "M3lo00/ofxstatement-santander-es",
+    "pxdeoleo/ofxstatement-do-bhd",
+    "epitheton/ofxstatement-zuno-sk",
+    "BIZ4Africa/ofxstatement-zm-stanbic",
+    "EtsBiz4Africa/ofxstatement-ly-bsic",
+    "BIZ4Africa/ofxstatement-cd-rawbank",
+    "markapp-company/ofxtrack",
+    "jbrodriguez/ofxware",
+    "edurbs/ofx2csv",
+    "arolson101/ofx4js",
+    "edarruiz/ofxsdk",
+    "robvadai/ofxstatement-qif",
+    "ofxstatement-santander",
+    "edurbs/ofx2csv",
+    "krscott/ofx2csv",
+    "heckman/ofx2xml",
+    "mvfc/ofx2csv",
+    "bfolkens/ofx2csv",
+    "tlianza/ofx2csv",
+    "cgbarros/ofx2csv",
+    "keeth/ofx2csv",
+    "b-g-d/ofx2csv",
+    "harleypig/ofx2ledger",
+    "joeroks/ofx2qfx",
+    "rmusmanno/ofx2xlsmbr",
+    "labbsr0x/ofx2xls",
+    "thecount2a/ofx2csv",
+    "rodrigomessiasbarros/ofx2json",
+    "marcospereda/OFX2XML_BR_BankStatement",
+    "programmeroftheeve/ofx2csv",
+    "scholsie64/Ofx2Csv",
+    "lucapino/ofx2qif-converter",
+    "choirinayj/ofx2dBox",
+    "tbluemel/ofx2json",
+    "moisesguimaraes/ofx2csv",
+    "igorabpereira/ofx2csv",
+    "Altreus/ofx2ledger",
+    "dhilst/ofx2csv",
+    "stgnet/ofx2csv",
+    "ridler77/ofx2sql",
+    "huyto/ofx3",
+    "The78estHerry/ofx3dconnexion",
+    "arolson101/ofx4js",
+    "stoicflame/ofx4j",
+    "quyvu01/ofx4n",
+    "lidioriul/ofx4j-implementacao",
+    "OFXbr/ofx4net-br",
+    "OFXbr/ofx4js-br",
+    "OFXbr/ofx4j-br",
+    "OFXbr/ofx4py-br",
+    "TSFBCE24RhythmHeaveners/OFXBoutique",
+    "toddfries/ofxcli",
+    "eyebite4/OfXGVleiTe",
+    "RahulOza/OFXConversion",
+    "shoyebquotex987-svg/Ofxswedits",
+    "n8henrie/ofxy",
+    "archont00/ofxstatement-wise",
+    "archont00/ofxstatement-partnersbankacz",
+    "Ralphovi/ofxstatement-scalable",
+    "Alfystar/ofxstatement-paypal-2",
+    "fertkir/ofxstatement-rs-altabanka",
+    "robvadai/ofxstatement-santander",
+    "WeslleyF/OfxViewer",
+    "conda-forge/ofxparse-feedstock",
+    "conda-forge/ofxparse-feedstock",
+    "conda-forge/ofxhome-feedstock",
+    "conda-forge/ofxclient-feedstock",
+    "Alfystar/ofxstatement-upday",
+    "leonardomelosantos/ofxparser.net",
+    "aclindsa/ofxgo",
+    "archont00/ofxstatement-raiffeisencz",
+    "Metasaura/ofxstatement-lloyds",
+    "mooredan/ofxstatement-fidelity",
+    "jstammers/ofxstatement-nordigen",
+    "gurkodil/ofxstatement-handelsbanken",
+    "javierarrieta/ofxstatement-ptsb",
+    "gpaulissen/ofxstatement-french",
+    "gpaulissen/ofxstatement-dutch",
+    "3v1n0/ofxstatement-n26",
+    "Jibuus/ofxstatement-be-hellobank-fr",
+    "kedder/ofxstatement-iso20022",
+    "FliegendeWurst/ofxstatement-advanzia-de",
+    "3v1n0/ofxstatement-bbva",
+    "Jibuus/ofxstatement-be-vdk-fr",
+    "mlaitinen/ofxstatement-revolut",
+    "archont00/ofxstatement-skippaycz",
+    "gintsmurans/ofxstatement-latvian",
+    "gurkodil/ofxstatement-okq8",
+    "bennesp/ofxstatement-satispay",
+    "3v1n0/ofxstatement-chebanca",
+    "kedder/ofxstatement-sample",
+    "ionicblue/ofxstatement-paypal",
+    "kedder/ofxstatement-lithuanian",
+    "daniel-beet/ofxstatement-jl-partnership",
+    "bubbas/ofxstatement-bubbas",
+    "FliegendeWurst/ofxstatement-sparkasse-de",
+    "FliegendeWurst/ofxstatement-mastercard-de",
+    "maxcco/ofxstatement-se-seb",
+    "praseodym/ofxstatement-nl-ingcreditcard",
+    "lbschenkel/ofxstatement-lansforsakringar",
+    "FnTm/ofxstatement-lv",
+    "archont00/ofxstatement-airbankcz",
+    "SDaron/ofxstatement-be-newb",
+    "gerasiov/ofxstatement",
+    "nblock/ofxstatement-austrian",
+    "gerasiov/ofxstatement-russian",
+    "renardeau/ofxstatement-be-belfius",
+    "selu/ofxstatement-hu-erste",
+    "medovina/ofxstatement-us-first-republic",
+    "zoltansebestyen/ofxstatement-unicredithu",
+    "zanderle/ofxstatement-dhl",
+    "archont00/ofxstatement-unicreditcz",
+    "ecorini/ofxstatement-it-banks",
+    "angryzor/ofxstatement-be-belfius-credit",
+    "rhbvkleef/ofxstatement-ing-nl",
+    "gerasiov/ofxstatement-lfs",
+    "gerasiov/ofxstatement-paypal",
+    "angryzor/ofxstatement-be-belfius",
+    "gerasiov/ofxstatement-seb",
+    "angryzor/ofxstatement-ynab",
+    "MirkoDziadzka/ofxstatement-germany",
+    "angryzor/ofxstatement-be-kbc-credit",
+    "omarkohl/ofxstatement-sparkasse-freiburg",
+    "ReinisLusis/ofxstatement-latvian",
+    "ReinisLusis/ofxstatement",
+    "MirkoDziadzka/ofxstatement-1822direkt",
+    "lopter/ofxstatement-us-schwab",
+    "skolima/ofxstatement-aliorpl",
+    "partizand/ofxstatement-vtb24",
+    "yay6/ofxstatement-polish",
+    "lopter/ofxstatement-us-hsbc",
+    "dosumis/ofxstatement-coop",
+    "DarwinAwardWinner/ofxtoolkit",
+    "sppeect/OFXNetCore",
+    "pjacobsma/OFXUtil",
+    "ammubhave/ofxtools-rust",
+    "denvaar/ofxclient-python",
+    "paulhallett/OfxSchema.net",
+    "pjacobsma/OFXUtil",
+    "ammubhave/ofxtools-rust",
+    "tophathacker/OFXlib",
+    "ZachS/ofxparser",
+    "TSFBCE24RhythmHeaveners/OFXLegacyCB",
+    "oseiastsilva/ofxreader",
+    "ddoherty03/ofxhome_dump",
+    "Zzzero-hash/OFXTrader",
+    "BhrathiDevi/OFXFeTest",
+    "ofxsushant55/ofxsushant55",
+    "gbernardojr/ofxconverter",
+    "asgrim/ofxparser",
+    "gurkodil/ofxstatement-sjprio",
+    "pjacobsma/OFXUtil",
+    "jseutter/ofxparse",
+    "hleofxquotes/ofxlist",
+    "ineedzaza/ofxplugins.github.io",
+    "2427775883/oFXdWqVJOw",
+    "ChristopherMaurer/OFXtoDB",
+    "aiwilliams/ofxrb",
+    "arthurhenrique/OfxJS",
+    "eholic/ofxer",
+    "truk/OFXjs",
+    "bodhidogma/ofxpy_pocketsense",
+    "domelqq/OFXBankBridge",
+    "captin411/ofxmate",
+    "jasonmcdermott/ofxForums",
+    "rimas79/OFXGenerator",
+    "codinguser/OfxModule",
+    "tfearn/OFXParser",
+    "thompsonson/OfxToMmex",
+    "hymerman/ofxtools",
+    "libsteve/ofxcsv",
+    "Janderson/ofxtocsv",
+    "mk270/ofxparse",
+    "cooperm81/ofxgen",
+    "codeandcreative/ofxparser",
+    "jliesch/ofxgetqt",
+    "finarrow/ofxdb",
+    "jliesch/ofxget",
+    "virtualstaticvoid/ofxloader",
+    "mehmetcoban/ofxparser",
+    "jacques/ofxparser",
+    "yurisurz/OFXParser",
+    "OwenRWilliams/OFXModifier",
+    "RahulOza/ofxGen",
+    "michalmazur/ofxi4gc",
+    "michalmazur/ofxi4gc",
+    "crecord/OfxAddonCombo",
+    "tuttleofx/ofxPluginTemplate",
+    "jeanpbarbosa/OFXReader",
+    "gvtrindade/OfxParserApp",
+    "adelarcubs/ofxparser",
+    "jjr-dev/OFXtoPHP",
+    "alicevision/ofxMVG",
+    "lcrs/ofxwrap",
+    "SecurityInnovation/ofxpostern",
+    "TSFBCE24RhythmHeaveners/OFXOffsetWrapBackport",
+    "janimatic/ofxSample",
+    "snowzhangy/OfxPyIOPlugin",
+    "gatgui/ofxpp",
+    "mmbarness/ofxDataGetter",
+    "terrelcodes/ofximport",
+    "terotil/ofxify",
+    "afer92/ofxutils",
+    "hqr90/ofxParsingFlaskApi",
+    "captin411/ofxhome",
+    "LibreCodeCoop/ofxhelper",
+    "stevegt/ofxio",
+    "woollybah/ofxmax",
+    "benjaminlewis-1000/ofxclient",
+    "srvgit/ofxclient",
+    "anna-follestad-4ss/ofxapi-dummy",
+    "ofxnotyuvhere/ofxnotyuvhere",
+    "cmayes/ofxstatement-simple",
+    "ofxs/ofxs-buildtools",
+    "cmayes/ofxstatement-betterment",
+    "s373/ofxs373ByteRandom",
+    "lbschenkel/ofxstatement-al_bank",
+    "zdima/OFXParser",
+
+
+    // ofApps
+    "jildertviet/ofxJVisuals",
+    "chemabc/ofx2dPlot",
+    "crecord/OfxAddonCombo",
+    "fievel20/ofxStreetViewApp",
+    "banditelol/ofxPlayWithCircles",
+    "assassin3120/ofxsyphon_test",
+    "yiqinma/ofxbox2d",
+    "genekogan/ofxaddons-bingo",
+    "arturoc/ofxaddons-tests",
+    "abrennec/ofxadvanced",
+    "JakeCallery/ofxhalloweeneyes",
+
+    // ofSites
+    "kr15h/ofxpimapper.com",
+    "atduskgreg/ofxaddons.com",
+    "ofxpimapper/ofxpimapper.github.io",
+
+    // Empty
+    "armonnaeini/ofxarkit_cone_glsl",
+    "zxt1225/ofxmsaof",
+
+    // Danoli blacklist
+    "akhil0003/OFXassessment",
+    "alekcodotchut/ofxact",
+    "alekshuselperene/ofxadh",
+    "alson/ofxstatement-traderepublic",
+    "andrew-dash/ofxForecast",
+    "AxisNL/ofxtools",
+    "AxisWayPassage/ofxfgvzf",
+    "BIZ4Africa/ofxstatement-cd-tmb",
+    "captin411/ofxclient",
+    "carvzz/ofxfront",
+    "chrisjsimpson/ofx2obp",
+    "cmintey/ofx2csv",
+    "CrashenX/ofx2txt",
+    "danoli3/ofxAddons",
+    "danoli3/ofxAddonsSite",
+    "DhyanShaji/Ofxathletes",
+    "edwagner/ofxstatement-schwab-json",
+    "Electronforcool/ofxfgwcp",
+    "fluxly/ofxFluxlyBoxHerding",
+    "frankIT/ofxstatement-fineco",
+    "garrisonkristine2574/ofxyre",
+    "gpaulissen/ofxstatement-mt940",
+    "gyp/ofxstatement-otp",
+    "heckman/ofx2",
+    "JoelColledge/ofxstatement-co-operative",
+    "kedder/ofxstatement",
+    "kedder/ofxstatement-transferwise",
+    "luizeduos/ofxfacil",
+    "Lunat1q/OFXAnalyzer",
+    "medovina/ofxstatement-cz-komercni",
+    "mooredan/ofxstatement-bkk",
+    "MusikPolice/ofxcat",
+    "NanoSupplier/ofxffocp",
+    "NathanVNT/ofx2qif",
+    "pect0ral/ofxpwn",
+
+    // ofx case mismatch
+    "Thimisul/OFX2CSV",
+    "otodo/OFX2Let-s-converter",
+    "KevinSJ/Ofx4J",
+    "estock/OfxAcidTrip",
+    "cordovas/OfxBouncingBalls",
+    "ElbaLajin/OFXCodingTest",
+    "ChrisHallett/OFXCodeTest",
+    "doktaa/OFXCodingTestNorman",
+    "arunmallik/OFXCode",
+    "leocds13/OFXDartParser",
+    "singlebarrel/OFXDirectDownloader",
+    "gangajaliya-sandeep/OFXDemoWithJest",
+    "gangajaliya-sandeep/OFXDemo",
+    "hachi-kun/OFXExporter",
+    "artgineer2/OfxEditorFlask",
+    "carlospintojunior/OFXFileConverter",
+    "EubenMonteiro/OFXfromExcel",
+    "Gx8ZT7OVyk/oFXfA_i_9",
+    "nstesterns/OFXHTK",
+    "KevinSJ/OfxHome4J",
+    "divineralph/OFxhuKZ2zbE373fbwdp8pg1Xbmelb7JFdBR80nEosZVieJLMCLjNyUBYuqP",
+    "murilxaraujo/OFXKit",
+    // "jaysonh/OFXLaserMulti",
+    // "jaysonkh/OFXLaserTest",
+    "Jquery-selectorsenhanced/OFxl0OrnzGRaEHT3nCs8nzy_",
+    // "Aidanwang0309/OfxMidiSythTest",
+    "Veyron300/OFXProject",
+    "sdbr/Ofxparser",
+    "gesicasouza/OFXPARSE",
+    "Pavit/OfxParser",
+    "devGustavoFerreira/OfxParser",
+    "iadip/OfxPropMachine",
+    "artgineer2/OfxPedalUiTqs",
+    "renhammington/OFXReader",
+    "Rodrigo-Vargas/OfxReader",
+    "jhollingworth/OFXSharp",
+    "OfxUtilities/OFXSpecs",
+    "kamino-company/OfxSharp",
+    "ofxsushant55/Ofxsushant.github.io",
+    "ctjioman/OFXTest",
+    "JoaoVitor-Dev/OFXTools",
+    "xurantju/ofXtion",
+    "hewanjeleh/oFxUSs6a1",
+    "hewanjeleh/oFxUSs6a1.mp4",
+    "RSHKwee/OFXViewer",
+
+    // 3rd letter non-uppercase
+    "GridWalrusMattock/ofxakzpr",
+    "vinden-shoomver/ofxasj",
+    "nathnamadaki22/ofxbot",
+    "repitt24m/ofxbul",
+    "arthurawa/ofxbmx",
+    "Tealsaintplay/ofxbqxjp",
+    "Opticnuamplifier/ofxbqvdu",
+    "crazylion/ofxbundler",
+    "trapchieftainstrait/ofxcwqnn",
+    "zulunik/ofxctf",
+    "myappstoolbox/ofxconverter",
+    "rmumty/ofxczm",
+    "ygCEO/ofxcel",
+    "camattor/ofxcmp",
+    "karimillin/ofxckc",
+    "popgychi/ofxctr",
+    "rhranichny/ofxdrawnetic",
+    "robertofazio/ofxdarknetlinux",
+    "Jadebenrouter/ofxdzaqq",
+    "eEjmcgfUGRJnx31/ofxdia",
+    "daveylanct/ofxdgj",
+    "bethwadegr/ofxdve",
+    "demanuga/ofxeuf",
+    "tiogansuni/ofxeen",
+    "excruch/ofxefm",
+    "stefanejr/ofxewh",
+    "crindt/ofxer",
+    "n-brown46176/ofxevp",
+    "LuanRocha92/ofxguru",
+    "youngdaniel39/ofxguz",
+    "kruegerjessica3758/ofxglv",
+    "SharpDruidTap/ofxgmnbz",
+    "brainqik/ofxhunn",
+    "vladimstru/ofxhvf",
+    "theosrafipper/ofxhuk",
+    "eduardomut/ofxhqi",
+    "lucasrobi/ofxhnb",
+    "yisyelane/ofxhmi",
+    "repitt24m/ofxihv",
+    "AmberEagleTrellis/ofxitkow",
+    "vughezzhaka/ofxiea",
+    "cmpykuri/ofxilf",
+    "hurly93/ofximd",
+    "QgPhllsYNCpl87/ofxizk",
+    "torchaefles/ofxivi",
+    "sounboxxaeor/ofxind",
+    "aciupipo/ofxjoq",
+    "kreet777/ofxjmh",
+    "rennzagiran/ofxjrw",
+    "youcowh/ofxkfu",
+    "santiagomichael7/ofxkxe",
+    "gbassq/ofxkps",
+    "blendmovergrade/ofxkdsog",
+    "jamy-mebra/ofxkin",
+    "simelegoffy/ofxkex",
+    "liamanderson25150/ofxkdn",
+    "apowrie322/ofxlbv",
+    "brumfb/ofxlib",
+    "dayada/ofxluu",
+    "valteritia/ofxlpg",
+    "wudsarra/ofxlgi",
+    "sericd/ofxmza",
+    "lucasrobi/ofxmcd",
+    "lipamdist/ofxmzs",
+    "liamanderson25150/ofxnjf",
+    "erthickbattle6/ofxnqv",
+    "grranwacode/ofxnpt",
+    "vinying/ofxnjt",
+    "mpppon91/ofxnpw",
+    "sudmunspaceddor/ofxoqz",
+    "ramamindi/ofxopenapi",
+    "njackson979621/ofxoif",
+    "repitt24m/ofxowd",
+    "anburrey/ofxoaf",
+    "aronr92/ofxpab",
+    "matheusilva/ofxparse",
+    "netarch001039/ofxpjn",
+    "ephenyxdigital/ofxparser",
+    "arthurpro/ofxparser",
+    "asdfgrda/ofxpmj",
+    "lleofernandes/ofxparse",
+    "Manda-pro-Financeiro/ofxparse-manda",
+    "jpricardo/ofxparser-api",
+    "maxiwell/ofxparse-0.14-fork",
+    "vinden-shoomver/ofxqpk",
+    "percentdiplomatpull/ofxqbqas",
+    "rangelraymond4/ofxqyj",
+    "olafhacker523/ofxquiet",
+    "tb7554/ofxreader",
+    "ShoreSorcererKind/ofxrdvna",
+    "beulnev/ofxrly",
+    "jongwang1010/ofxrzq",
+    "puttrudbeff/ofxrvo",
+    "jawa13389/ofxrfz",
+    "VoidVaporJoist/ofxsfcgy",
+    "makan-huang/ofxsxi",
+    "boclua/ofxstatement-gls",
+    "gerasiov/ofxstatement-plugins",
+    "Ralphovi/ofxstatement-testbed",
+    "tlybbl/ofxtgj",
+    "zerotholm/ofxtnz",
+    "sflanaga/ofxtocsv",
+    "orisha2222/ofxtest-bot",
+    "vzasl55a0s54/ofxuul",
+    "cavenovicebarn/ofxuqpux",
+    "mikhanbusfe/ofxukq",
+    "strancycompres/ofxuwy",
+    "vughezzhaka/ofxutk",
+    "Imogend-Mitchelli/ofxvnj",
+    "ehizzhoo/ofxvto",
+    "vacontabilidade/ofxva",
+    "demanuga/ofxwfm",
+    "anderson-l92819/ofxwss",
+    "felpzdcd/ofxwb",
+    "erthickbattle6/ofxxjr",
+    "brooke455151/ofxxtn",
+    "kirinahdafertic/ofxxal",
+    "BannerBowyer/ofxxztde",
+    "pinaelleoumss/ofxxba",
+    "holelawmakerharbor/ofxxznit",
+    "alex-p-dzl/ofxxrr",
+    "anderson-m66653/ofxxrd",
+    "plusinguyravajai/ofxxxf",
+    "fanch-au/ofxxnb",
+    "PwDm00YVc0hQs29/ofxxjc",
+    "hantosmug938wv0/ofxy4",
+    "rittminrec/ofxyjg",
+    "warrencody5085/ofxybc",
+    "mathulyuk/ofxyym",
+    "schultzrobert6/ofxygq",
+    "jordanmelissa2/ofxyqs",
+    "Indigokifold/ofxyddgh",
+    "anesscalex1983/ofxz13",
+    "beulnev/ofxzdj",
+    "mukomespernak/ofxzyi",
+    "schmidtdaryl6859/ofxzho",
+    "artiekshkawar/ofxzcg",
+    "ofxzinho/ofxzinho",
+    "sericd/ofxznt",
+    "sudmunspaceddor/ofxzga",
+
+
+  ];
+
+  // -------------------------------------------------------------
+  // Optional pagination: by default ALL matching addons render at
+  // once (no "Load more"). Set CONFIG.pageSize to a number to
+  // re-enable batching, or append ?limit=60 to the page URL.
+  // -------------------------------------------------------------
+  var CONFIG = { pageSize: null };
+  (function readLimitParam(){
+    try{
+      var params = new URLSearchParams(window.location.search);
+      if (params.has('limit')){
+        var n = parseInt(params.get('limit'), 10);
+        if (!isNaN(n) && n > 0) CONFIG.pageSize = n;
+      }
+    } catch(e){ /* ignore */ }
+  })();
+
+  var ALL = [];
+  var FILTERED = [];
+  var shown = 0;
+  var viewMode = 'grid';
+
+  // Tri-state boolean filters. 'any' = no filter, 'yes' = must be true, 'no' = must be false.
+  var TRI_FIELDS = [
+    { key:'fork',      label:'Is fork',              getter:function(a){ return a.fork; } },
+    { key:'source',    label:'Is source',            getter:function(a){ return (a.source===null||a.source===undefined) ? true : false; } },
+    { key:'thumbnail', label:'Has thumbnail',        getter:function(a){ return !!a.has_thumbnail; } },
+    { key:'structure', label:'Has valid structure',  getter:function(a){ return a.has_correct_folder_structure; } },
+    { key:'archived',  label:'Is archived',          getter:function(a){ return a.archived; } },
+    { key:'makefile',  label:'Has makefile',         getter:function(a){ return a.has_makefile; } },
+    { key:'releases',  label:'Has releases',         getter:function(a){ return a.has_releases; } },
+  ];
+  var DEFAULT_TRI = { fork:'no', source:'any', thumbnail:'any', structure:'any', archived:'no', makefile:'any', releases:'any' };
+  var triState = {};
+
+  var els = {
+    search: document.getElementById('search'),
+    sort: document.getElementById('f-sort'),
+    minstars: document.getElementById('f-minstars'),
+    minforks: document.getElementById('f-minforks'),
+    minexamples: document.getElementById('f-minexamples'),
+    triList: document.getElementById('tri-list'),
+    results: document.getElementById('results'),
+    summary: document.getElementById('result-summary'),
+    filtersCount: document.getElementById('filters-count'),
+    loadMoreWrap: document.getElementById('load-more-wrap'),
+    loadMore: document.getElementById('load-more'),
+    brandSub: document.getElementById('brand-sub'),
+    filtersPanel: document.getElementById('filters-panel'),
+  };
+
+  function esc(s){
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  function fmtDate(iso){
+    if (!iso) return '—';
+    return iso.slice(0,10);
+  }
+
+  function thumbUrl(a){
+    var branch = a.default_branch || 'master';
+    return 'https://raw.githubusercontent.com/' + a.full_name + '/' + branch + '/ofxaddons_thumbnail.png';
+  }
+
+  function repoUrl(a){ return 'https://github.com/' + a.full_name; }
+  function userUrl(login){ return 'https://github.com/' + login; }
+  function compareUrl(a, branchName){
+    return 'https://github.com/' + a.full_name + '/compare/' + (a.default_branch||'master') + '...' + branchName;
+  }
+
+  // ---------- tri-state controls ----------
+  function renderTriControls(){
+    els.triList.innerHTML = TRI_FIELDS.map(function(f){
+      return '<button type="button" class="tri" data-key="' + f.key + '" data-state="' + triState[f.key] + '">' +
+             '<span class="tri-box">' + triGlyph(triState[f.key]) + '</span>' +
+             '<span>' + esc(f.label) + '</span>' +
+             '</button>';
+    }).join('');
+  }
+  function triGlyph(state){
+    if (state === 'yes') return '✓';
+    if (state === 'no') return '✕';
+    return '?';
+  }
+  function cycleTri(state){
+    if (state === 'any') return 'yes';
+    if (state === 'yes') return 'no';
+    return 'any';
+  }
+  els.triList.addEventListener('click', function(e){
+    var btn = e.target.closest('.tri');
+    if (!btn) return;
+    var key = btn.getAttribute('data-key');
+    triState[key] = cycleTri(triState[key]);
+    btn.setAttribute('data-state', triState[key]);
+    btn.querySelector('.tri-box').textContent = triGlyph(triState[key]);
+    scheduleApplyFilters();
+  });
+
+  // ---------- filtering ----------
+  function triMatch(val, want){
+    if (want === 'any') return true;
+    if (val === null || val === undefined) return false; // filter only ever matches non-null values
+    if (want === 'yes') return val === true;
+    if (want === 'no') return val === false;
+    return true;
+  }
+
+  function computeFiltered(){
+    var q = els.search.value.trim().toLowerCase();
+    var minStars = parseInt(els.minstars.value, 10) || 0;
+    var minForks = parseInt(els.minforks.value, 10) || 0;
+    var minExamples = parseInt(els.minexamples.value, 10) || 0;
+    var sort = els.sort.value;
+
+    var out = ALL.filter(function(a){
+      if (q){
+        var hay = ((a.name||'') + ' ' + (a.owner && a.owner.login || '') + ' ' + (a.description||'')).toLowerCase();
+        if (hay.indexOf(q) === -1) return false;
+      }
+      for (var i=0; i<TRI_FIELDS.length; i++){
+        var f = TRI_FIELDS[i];
+        if (!triMatch(f.getter(a), triState[f.key])) return false;
+      }
+      if ((a.stargazers_count||0) < minStars) return false;
+      if ((a.forks_count||0) < minForks) return false;
+      if ((a.example_count||0) < minExamples) return false;
+      return true;
+    });
+
+    out.sort(function(x,y){
+      switch(sort){
+        case 'updated_asc': return (x.pushed_at||'').localeCompare(y.pushed_at||'');
+        case 'created_desc': return (y.created_at||'').localeCompare(x.created_at||'');
+        case 'created_asc': return (x.created_at||'').localeCompare(y.created_at||'');
+        case 'stars_desc': return (y.stargazers_count||0) - (x.stargazers_count||0);
+        case 'forks_desc': return (y.forks_count||0) - (x.forks_count||0);
+        case 'name_asc': return (x.name||'').localeCompare(y.name||'');
+        case 'author_asc': return (x.owner.login||'').localeCompare(y.owner.login||'');
+        case 'updated_desc':
+        default: return (y.pushed_at||'').localeCompare(x.pushed_at||'');
+      }
+    });
+
+    FILTERED = out;
+  }
+
+  function updateSummary(){
+    els.summary.textContent = 'Showing ' + Math.min(shown, FILTERED.length) + ' of ' + FILTERED.length + ' matching addons';
+    els.filtersCount.innerHTML = '<b>' + FILTERED.length + '</b> of ' + ALL.length + ' addons match';
+  }
+
+  // ---------- rendering ----------
+  function flagsHTML(a){
+    var out = [];
+    if (a.has_correct_folder_structure) out.push('<span class="badge" title="Has a valid addon folder structure">s</span>');
+    if (a.has_makefile) out.push('<span class="badge" title="Ships a Makefile">mk</span>');
+    if (a.has_releases) out.push('<span class="badge" title="Has tagged GitHub releases">r</span>');
+    return out.join('');
+  }
+
+  function subList(addon, items, kind){
+    if (!items || !items.length) return '<span class="sub-meta">None</span>';
+    var lis = items.map(function(it){
+      if (kind === 'forks'){
+        return '<li>' +
+                 '<div class="li-title" title="Updated ' + fmtDate(it.pushed_at) + '">' + fmtDate(it.pushed_at) + '</div>' +
+                 '<div class="li-sub"><a href="' + esc('https://github.com/' + it.full_name) + '" target="_blank" rel="noopener">' + esc(it.full_name) + '</a> · ★' + (it.stargazers_count||0) + '</div>' +
+               '</li>';
+      } else {
+        return '<li>' +
+                 '<div class="li-title" title="Last commit ' + fmtDate(it.last_commit_at) + '">' + fmtDate(it.last_commit_at) + '</div>' +
+                 '<div class="li-sub"><a href="' + esc(compareUrl(addon, it.name)) + '" target="_blank" rel="noopener">' + esc(it.name) + '</a> · +' + (it.ahead_by||0) + ' / -' + (it.behind_by||0) + '</div>' +
+               '</li>';
+      }
+    }).join('');
+    return '<ul>' + lis + '</ul>';
+  }
+
+  function cardHTML(a){
+    var owner = a.owner || {};
+    var thumb = a.has_thumbnail
+      ? '<img class="thumb" loading="lazy" src="' + esc(thumbUrl(a)) + '" onerror="this.remove()" alt="">'
+      : '';
+    return (
+      '<div class="card">' +
+        thumb +
+        '<div class="badges">' + flagsHTML(a) + '</div>' +
+        '<div class="card-body">' +
+          '<div class="card-title-row">' +
+            '<a class="card-title" href="' + esc(repoUrl(a)) + '" target="_blank" rel="noopener">' + esc(a.name) + '</a>' +
+          '</div>' +
+          '<div class="card-author">' +
+            (owner.avatar_url ? '<img src="' + esc(owner.avatar_url) + '" alt="" loading="lazy">' : '') +
+            '<a href="' + esc(userUrl(owner.login)) + '" target="_blank" rel="noopener">' + esc(owner.login||'Unknown') + '</a>' +
+          '</div>' +
+          '<div class="card-desc">' + esc(a.description || 'No description') + '</div>' +
+          '<div class="big-stats">' +
+            '<div class="stat"><span class="num">' + (a.stargazers_count||0) + '</span><span class="lbl">Stars</span></div>' +
+            '<div class="stat"><span class="num">' + (a.forks_count||0) + '</span><span class="lbl">Forks</span></div>' +
+            '<div class="stat"><span class="num">' + (a.example_count||0) + '</span><span class="lbl">Examples</span></div>' +
+          '</div>' +
+          '<div class="dates-row"><span title="Updated ' + fmtDate(a.pushed_at) + '">U ' + fmtDate(a.pushed_at) + '</span><span class="sep">·</span><span title="Created ' + fmtDate(a.created_at) + '">C ' + fmtDate(a.created_at) + '</span></div>' +
+          '<details class="sub"><summary>Forks (' + (a.newer_forks?a.newer_forks.length:0) + ')</summary>' + subList(a, a.newer_forks,'forks') + '</details>' +
+          '<details class="sub"><summary>Branches ahead (' + (a.ahead_branches?a.ahead_branches.length:0) + ')</summary>' + subList(a, a.ahead_branches,'branches') + '</details>' +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function rowHTML(a){
+    var owner = a.owner || {};
+    var thumb = a.has_thumbnail
+      ? '<img class="row-thumb" loading="lazy" src="' + esc(thumbUrl(a)) + '" onerror="this.remove()" alt="">'
+      : '';
+    return (
+      '<tr>' +
+        '<td>' + thumb + '</td>' +
+        '<td><a class="row-name" href="' + esc(repoUrl(a)) + '" target="_blank" rel="noopener">' + esc(a.name) + '</a></td>' +
+        '<td><a href="' + esc(userUrl(owner.login)) + '" target="_blank" rel="noopener">' + esc(owner.login||'Unknown') + '</a></td>' +
+        '<td class="row-desc">' + esc(a.description||'') + '</td>' +
+        '<td>' + (a.archived ? 'Yes' : 'No') + '</td>' +
+        '<td class="col-flags"><div class="row-flags">' + flagsHTML(a) + '</div></td>' +
+        '<td class="num">' + (a.stargazers_count||0) + '</td>' +
+        '<td class="num">' + (a.forks_count||0) + '</td>' +
+        '<td class="num">' + (a.example_count||0) + '</td>' +
+        '<td class="date"><span title="Updated ' + fmtDate(a.pushed_at) + '">' + fmtDate(a.pushed_at) + '</span></td>' +
+        '<td class="date"><span title="Created ' + fmtDate(a.created_at) + '">' + fmtDate(a.created_at) + '</span></td>' +
+        '<td class="col-forkslist">' +
+          '<details class="sub"><summary>' + (a.newer_forks?a.newer_forks.length:0) + '</summary>' + subList(a, a.newer_forks,'forks') + '</details>' +
+        '</td>' +
+        '<td class="col-branches">' +
+          '<details class="sub"><summary>' + (a.ahead_branches?a.ahead_branches.length:0) + '</summary>' + subList(a, a.ahead_branches,'branches') + '</details>' +
+        '</td>' +
+      '</tr>'
+    );
+  }
+
+  function buildCardsHTML(list){ return list.map(cardHTML).join(''); }
+  function buildRowsHTML(list){ return list.map(rowHTML).join(''); }
+
+  // Full (re)render of the current FILTERED set in the current view mode.
+  // Uses a single innerHTML assignment (bulk parse) instead of per-node
+  // DOM insertion — with ~4,700 possible cards this is the difference
+  // between a snappy update and a visible stutter.
+  function renderAll(){
+    var end = CONFIG.pageSize || FILTERED.length;
+    var slice = FILTERED.slice(0, end);
+
+    if (viewMode === 'grid'){
+      els.results.className = 'grid';
+      els.results.innerHTML = FILTERED.length ? buildCardsHTML(slice) : '<div class="empty-state">No addons match these filters</div>';
+    } else {
+      els.results.className = 'list';
+      if (!FILTERED.length){
+        els.results.innerHTML = '<div class="empty-state">No addons match these filters</div>';
+      } else {
+        els.results.innerHTML =
+          '<div class="table-wrap"><table class="addons-table"><thead><tr>' +
+          '<th></th><th>Name</th><th>Author</th><th>Description</th><th>Archived</th>' +
+          '<th class="col-flags">Flags</th>' +
+          '<th>Stars</th><th>Forks</th><th>Examples</th><th>Updated</th><th>Created</th>' +
+          '<th class="col-forkslist">Forks</th><th class="col-branches">Branches ahead</th>' +
+          '</tr></thead><tbody>' + buildRowsHTML(slice) + '</tbody></table></div>';
+      }
+    }
+    shown = slice.length;
+    els.loadMoreWrap.style.display = (CONFIG.pageSize && shown < FILTERED.length) ? 'block' : 'none';
+    updateSummary();
+  }
+
+  function loadMoreClick(){
+    var batch = CONFIG.pageSize || FILTERED.length;
+    var slice = FILTERED.slice(shown, shown + batch);
+    if (!slice.length) return;
+    if (viewMode === 'grid'){
+      els.results.insertAdjacentHTML('beforeend', buildCardsHTML(slice));
+    } else {
+      var tbody = els.results.querySelector('tbody');
+      if (tbody) tbody.insertAdjacentHTML('beforeend', buildRowsHTML(slice));
+    }
+    shown += slice.length;
+    els.loadMoreWrap.style.display = (shown < FILTERED.length) ? 'block' : 'none';
+    updateSummary();
+  }
+
+  // ---------- perf: debounce + defer, so results don't re-render on
+  // every single keystroke/click while a filter is still in flux ----------
+  var debounceTimer;
+  function scheduleApplyFilters(){
+    els.results.classList.add('is-updating');
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function(){
+      computeFiltered();
+      requestAnimationFrame(function(){
+        renderAll();
+        els.results.classList.remove('is-updating');
+      });
+    }, 150);
+  }
+  function scheduleRenderOnly(){
+    els.results.classList.add('is-updating');
+    requestAnimationFrame(function(){
+      renderAll();
+      els.results.classList.remove('is-updating');
+    });
+  }
+
+  // ---------- events ----------
+  els.search.addEventListener('input', scheduleApplyFilters);
+  els.sort.addEventListener('change', scheduleApplyFilters);
+  [els.minstars, els.minforks, els.minexamples].forEach(function(el){ el.addEventListener('input', scheduleApplyFilters); });
+  els.loadMore.addEventListener('click', loadMoreClick);
+
+  function resetFilters(){
+    els.search.value = '';
+    els.sort.value = 'updated_desc';
+    els.minstars.value = 0;
+    els.minforks.value = 0;
+    els.minexamples.value = 0;
+    triState = Object.assign({}, DEFAULT_TRI);
+    renderTriControls();
+    scheduleApplyFilters();
+  }
+  document.getElementById('preset-default').addEventListener('click', resetFilters);
+
+  document.getElementById('preset-robust').addEventListener('click', function(){
+    triState.source = 'yes';
+    triState.fork = 'no';
+    triState.structure = 'yes';
+    triState.makefile = 'yes';
+    triState.releases = 'yes';
+    triState.archived = 'no';
+    renderTriControls();
+    scheduleApplyFilters();
+  });
+  document.getElementById('preset-all').addEventListener('click', function(){
+    TRI_FIELDS.forEach(function(f){ triState[f.key] = 'any'; });
+    renderTriControls();
+    scheduleApplyFilters();
+  });
+
+  document.getElementById('view-grid').addEventListener('click', function(){ setView('grid'); });
+  document.getElementById('view-list').addEventListener('click', function(){ setView('list'); });
+  function setView(mode){
+    if (mode === viewMode) return;
+    viewMode = mode;
+    document.getElementById('view-grid').classList.toggle('active', mode==='grid');
+    document.getElementById('view-list').classList.toggle('active', mode==='list');
+    scheduleRenderOnly();
+  }
+
+  document.getElementById('toggle-details').addEventListener('change', function(e){
+    document.body.classList.toggle('hide-details', e.target.checked);
+  });
+  document.getElementById('toggle-details').checked = false;
+
+  document.getElementById('open-filters').addEventListener('click', function(){
+    els.filtersPanel.classList.add('open');
+  });
+  document.getElementById('close-filters').addEventListener('click', function(){
+    els.filtersPanel.classList.remove('open');
+  });
+
+  // ---------- about dialog ----------
+  var aboutDialog = document.getElementById('about-dialog');
+  document.getElementById('about-btn').addEventListener('click', function(){ aboutDialog.showModal(); });
+  document.getElementById('about-close').addEventListener('click', function(){ aboutDialog.close(); });
+  aboutDialog.addEventListener('click', function(e){ if (e.target === aboutDialog) aboutDialog.close(); });
+
+  // ---------- dark / light theme ----------
+  var THEME_KEY = 'ofxaddons-theme';
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('theme-toggle').textContent = (t === 'dark') ? '☀' : '☾';
+  }
+  (function initTheme(){
+    var saved = null;
+    try{ saved = localStorage.getItem(THEME_KEY); } catch(e){ /* ignore */ }
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(saved || (prefersDark ? 'dark' : 'light'));
+  })();
+  document.getElementById('theme-toggle').addEventListener('click', function(){
+    var next = (document.documentElement.getAttribute('data-theme') === 'dark') ? 'light' : 'dark';
+    applyTheme(next);
+    try{ localStorage.setItem(THEME_KEY, next); } catch(e){ /* ignore */ }
+  });
+
+  function syncHeaderHeight(){
+    var h = document.querySelector('header');
+    if (h) document.documentElement.style.setProperty('--header-h', h.offsetHeight + 'px');
+  }
+  window.addEventListener('resize', syncHeaderHeight);
+
+  // ---------- data loading ----------
+  function normalize(a){
+    a.fork = (a.fork === undefined) ? null : a.fork;
+    a.source = (a.source === undefined) ? null : a.source;
+    return a;
+  }
+
+
+  function applyBlacklist(list){
+    var authors = BLACKLIST_AUTHORS.map(function(s){ return s.toLowerCase(); });
+    var repos = BLACKLIST_REPOS.map(function(s){ return s.toLowerCase(); });
+    if (!authors.length && !repos.length) return list;
+    return list.filter(function(a){
+      var owner = ((a.owner && a.owner.login) || '').toLowerCase();
+      var full = (a.full_name || '').toLowerCase();
+      if (authors.indexOf(owner) !== -1) return false;
+      if (repos.indexOf(full) !== -1) return false;
+      return true;
+    });
+  }
+
+  function onDataLoaded(json){
+    document.body.classList.remove('no-data');
+    ALL = applyBlacklist((json.addons || []).map(normalize));
+    // var tmpblacklist = [];
+    // ALL.forEach(function(i){
+    //   //if(i.description==null || i.description.length<=1){
+    //     var firstLetter = i.name.charAt(3);
+    //     if( i.name.match("ofx")==null ){
+    //       //window.console.log('CRAP=',i.owner.login, '/', i.name );
+    //       //tmpblacklist.push("" + i.owner.login + '/' + i.name);
+    //     }
+    //     else if((firstLetter==firstLetter.toLowerCase() && firstLetter!=parseInt(firstLetter)) && !i.has_makefile && i.example_count<=0 && !i.has_makefile && !i.has_thumbnail){//} && !i.has_correct_folder_structure ){
+    //       //window.console.log('CRAP=',i.owner.login, '/', i.name );
+    //       tmpblacklist.push("" + i.owner.login + '/' + i.name);
+    //     }
+    //   //}
+    // });
+    // window.console.log(tmpblacklist);
+    els.brandSub.textContent = ALL.length + ' addons · generated ' + fmtDate(json.generated_at);
+    triState = Object.assign({}, DEFAULT_TRI);
+    renderTriControls();
+    computeFiltered();
+    renderAll();
+    syncHeaderHeight();
+  }
+
+  function showLoadError(){
+    document.body.classList.add('no-data');
+    els.brandSub.textContent = 'No database loaded';
+    els.results.className = 'grid';
+    els.results.innerHTML =
+      '<div class="no-data-box">' +
+        '<p>This page needs an addons database file to browse.</p>' +
+        '<p>Download the latest export from the <a href="https://github.com/danoli3/ofxAddons/releases/latest" target="_blank" rel="noopener">ofxAddons releases page</a>, then select the file below.</p>' +
+        '<span class="filename">Expected file name: addons.json</span>' +
+        '<input type="file" id="file-input" accept="application/json">' +
+      '</div>';
+    els.summary.textContent = 'No data loaded';
+    document.getElementById('file-input').addEventListener('change', function(e){
+      var file = e.target.files[0];
+      if (!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        try { onDataLoaded(JSON.parse(ev.target.result)); }
+        catch(err){ els.summary.textContent = 'Failed to parse file: ' + err.message; }
+      };
+      reader.readAsText(file);
+    });
+    syncHeaderHeight();
+  }
+
+  syncHeaderHeight();
+  // fetch('addons.json')
+  fetch('http://github.com/danoli3/ofxAddons/releases/latest/download/addons.json')
+    .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+    .then(onDataLoaded)
+    .catch(showLoadError);
+
+})();
+</script>
+</body>
+</html>
