@@ -22,8 +22,9 @@ jobs:
       - name: Download latest release asset
         run: |
           curl --fail --location \
-            --output addons.json \
-            "https://github.com/danoli3/ofxAddons/releases/latest/download/addons.json"
+            "https://github.com/danoli3/ofxAddons/releases/latest/download/addons.json.gz" \
+            | gzip --decompress \
+            > addons.json
 
       - name: Commit updated file
         run: |
